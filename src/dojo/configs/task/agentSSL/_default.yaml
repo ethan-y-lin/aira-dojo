@@ -1,0 +1,12 @@
+
+# @package task
+
+_target_: dojo.config_dataclasses.task.agentSSL.AgentSSLConfig
+benchmark: agentSSL
+name: ???
+setting: ???
+shot: ???
+seed: ???
+
+# ~~~ Evaluation and results ~~~
+submission_fname: submission.json

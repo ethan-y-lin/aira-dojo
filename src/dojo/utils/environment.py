@@ -68,7 +68,6 @@ def get_log_dir():
         raise ValueError(ENV_VAR_NOT_FOUND_ERR.format(env_var_name="LOGGING_DIR"))
     return log_dir
 
-
 def get_superimage_dir():
     """Get the superimage directory, creating it if it doesn't exist."""
     superimage_dir = os.getenv("SUPERIMAGE_DIR", "")
@@ -77,6 +76,19 @@ def get_superimage_dir():
         raise ValueError(ENV_VAR_NOT_FOUND_ERR.format(env_var_name="SUPERIMAGE_DIR"))
     return superimage_dir
 
+def get_agentSSL_task_dir():
+    """Get the AgentSSL task directory, creating it if it doesn't exist."""
+    agentSSL_task_dir = os.getenv("AGENTSSL_TASK_DIR", "")
+    if not agentSSL_task_dir:
+        raise ValueError(ENV_VAR_NOT_FOUND_ERR.format(env_var_name="AGENTSSL_TASK_DIR"))
+    return agentSSL_task_dir
+
+def get_agentSSL_data_dir():
+    """Get the AgentSSL data directory, creating it if it doesn't exist."""
+    agentSSL_data_dir = os.getenv("AGENTSSL_DATA_DIR", "")
+    if not agentSSL_data_dir:
+        raise ValueError(ENV_VAR_NOT_FOUND_ERR.format(env_var_name="AGENTSSL_DATA_DIR"))
+    return agentSSL_data_dir
 
 def get_mlebench_data_dir():
     """Get the MLEBench data directory, creating it if it doesn't exist."""

@@ -1,0 +1,15 @@
+# @package interpreter
+defaults:
+  - jupyter
+
+read_only_binds:
+  "${task.eval_dir}": eval
+  "${task.ssl_dir}/${task.benchmark}/eval/_shared": eval/src
+  "${task.task_dir}": task
+  "${task.experiment_dir}/program.py": program.py
+env:
+  DATA_DIR: /root/data
+  TASK_DIR: /root/task
+  EVAL_DIR: /root/eval
+  PROGRAM_PATH: /root/program.py
+  PYTHONPATH: /root/eval/src
