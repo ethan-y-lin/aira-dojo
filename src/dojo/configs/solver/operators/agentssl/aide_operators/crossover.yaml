@@ -1,0 +1,70 @@
+defaults:
+  - /solver/client@crossover.llm.client: litellm_4o
+
+crossover:
+  _target_: dojo.config_dataclasses.operators.base.OperatorConfig
+  llm:
+    _target_: dojo.config_dataclasses.llm.generic_llm.GenericLLMConfig
+    client: ???
+    generation_kwargs: {}
+  system_message_prompt_template:
+    _target_: dojo.config_dataclasses.llm.jinjaprompt.JinjaPromptConfig
+    template: |
+      # Introduction:
+      You are a Computer Vision Expert writing programs for high-stakes scientific research. You are provided with two previously developed
+      solutions below and should combine them together in order to further increase the (test time) performance.
+      For this you should first outline a brief plan in natural language for how the solutions can be merged and
+      then implement this crossover solution in Python based on the provided previous solutions.
+
+      # Task Description:
+      {{task_desc}}
+
+      {% if memory %}
+      # Memory:
+      {{memory}}
+      {% endif %}
+
+      # Previous solution 1:
+      ## Code:
+      {{prev_code1}}
+
+      # Previous solution 2:
+      ## Code:
+      {{prev_code2}}
+
+      # Instructions:
+      ## Response Format:
+      Your response should be a brief outline/sketch of your proposed solution in natural language (3-5 sentences),
+      followed by a single markdown code block (wrapped in ```) which implements this solution and prints out the evaluation metric.
+      There should be no additional headings or text in your response. Just natural language text followed by a newline and then the markdown code block.
+
+      ## Solution improvement sketch guideline:
+      The solution sketch should be a brief natural language description of how the previous solution can be improved.
+      You should be very specific and should only propose a single actionable improvement.
+      This improvement should be atomic so that we can experimentally evaluate the effect of the proposed change.
+      Take the Memory section into consideration when proposing the improvement.
+      The solution sketch should be 3-5 sentences.
+      Don't suggest to do EDA.
+
+      ## Implementation Guideline:
+      <TOTAL_TIME_REMAINING: {{time_remaining}}>
+      <TOTAL_STEPS_REMAINING: {{steps_remaining}}>
+      The code should **implement the proposed solution**.
+      The code should be a single-file python program that is self-contained and can be executed as-is.
+      No parts of the code should be skipped, don't terminate the before finishing the script.
+      Your response should only contain a single code block.
+      Be aware of the running time of the code, it should complete within {{execution_timeout}}.
+
+      {% if other_remarks %}
+      # Other Remarks:
+      {{other_remarks}}
+      {% endif %}
+
+    input_variables:
+      - task_desc
+      - memory
+      - prev_code1
+      - prev_code2
+      - time_remaining
+      - steps_remaining
+      - execution_timeout

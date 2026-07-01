@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from dataclasses import dataclass, field
-
+from typing import Optional
 from omegaconf import SI, MISSING
 
 from aira_core.config.base import BaseConfig
@@ -54,6 +54,13 @@ class SolverConfig(BaseConfig):
         default_factory=MemoryOpConfig,
         metadata={
             "description": "Memory configuration for the solver.",
+            "example": {},
+        },
+    )
+    draft_memory: Optional[MemoryOpConfig] = field(
+        default=None,
+        metadata={
+            "description": "Optional memory configuration used only by draft operator.",
             "example": {},
         },
     )

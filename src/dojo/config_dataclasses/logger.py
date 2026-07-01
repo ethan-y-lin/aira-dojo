@@ -46,14 +46,14 @@ class LoggerConfig(BaseConfig):
         },
     )
     wandb_entity: str | None = field(
-        default="aira-dojo",
+        default="SciDUC",
         metadata={
             "help": "entity name in wandb.ai",
             "exclude_from_hash": True,
         },
     )
     wandb_project_name: str | None = field(
-        default="hillclimbing-mlebench",
+        default="AgentSSL",
         metadata={
             "help": "Project name in wandb.ai.",
             "exclude_from_hash": True,

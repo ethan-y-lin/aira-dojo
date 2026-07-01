@@ -117,9 +117,10 @@ class Greedy(Solver):
         # Create the memory for operators
         self.memory_op = create_memory_op(self.cfg.memory)
         self.debug_memory_op = create_memory_op(self.cfg.debug_memory)
+        self.draft_memory_op = create_memory_op(self.cfg.draft_memory)
 
         # Then we create the operators
-        self.draft_fn = partial(draft_op, draft_llm, self.cfg, self.memory_op)
+        self.draft_fn = partial(draft_op, draft_llm, self.cfg, self.draft_memory_op)
         self.improve_fn = partial(improve_op, improve_llm, self.cfg, self.memory_op)
         self.debug_fn = partial(debug_op, debug_llm, self.cfg, self.debug_memory_op)
         self.analyze_fn = partial(analyze_op, analyze_llm, self.cfg)

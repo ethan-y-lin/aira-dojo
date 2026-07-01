@@ -68,9 +68,9 @@ def _main(cfg: RunConfig):
     import aira_core
 
     log.info(f"`aira_core` package source path: {inspect.getsourcefile(aira_core)}")
-    import mlebench
+    # import mlebench
 
-    log.info(f"`mlebench` package source path: {inspect.getsourcefile(mlebench)}")
+    # log.info(f"`mlebench` package source path: {inspect.getsourcefile(mlebench)}")
 
     # Create the output directory if it doesn't exist
     log.info(f"Saving experiment artifacts to: {cfg.logger.output_dir}")
@@ -93,6 +93,18 @@ def _main(cfg: RunConfig):
     # Allocate resources for the agent's workspace and instantiate an object that lets you reference and use them
     solver_interpreter = build(cfg.interpreter, INTERPRETER_MAP, data_dir=cfg.task.data_dir)
 
+    ##### UNCOMMENT TO PAUSE THE CONTAINER
+    solver_interpreter.instance.create_process()
+    try:
+        print("✅ Apptainer environment initialized.")
+        import time
+        while True:
+            time.sleep(60)
+    except KeyboardInterrupt:
+        log.info("Stopping instance...")
+        solver_interpreter.close()
+    return
+    #####
     eval_interpreter = None
 
     log.info("Preparing the workspaces...")

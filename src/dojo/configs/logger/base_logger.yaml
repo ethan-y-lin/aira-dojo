@@ -6,8 +6,8 @@ use_wandb: True  # Whether to log to wandb.ai.
 use_json: True # Whether to save files locally in JSON format
 
 # --- Other logger kwargs ---
-wandb_project_name: aira  # Project name in wandb.ai.
-wandb_entity: aira-dojo # entity name in wandb.ai
+wandb_project_name: AgentSSL  # Project name in wandb.ai.
+wandb_entity: SciDUC # entity name in wandb.ai
 tags: [] # Tags to add to the experiment.
 detailed_logging: False  # having mean/std/min/max can clutter wandb so we make it optional
 print_config: true # Whether to print the config to stdout.

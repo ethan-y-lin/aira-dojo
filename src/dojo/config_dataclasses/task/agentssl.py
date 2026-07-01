@@ -9,9 +9,9 @@ from dataclasses import dataclass, field
 from omegaconf import SI, MISSING
 
 from dojo.config_dataclasses.task.base import TaskConfig
-from dojo.utils.environment import get_agentSSL_data_dir, get_agentSSL_task_dir
+from dojo.utils.environment import get_agentssl_data_dir, get_agentssl_task_dir
 
-agentSSL_operator_prompts: dict[str, str] = {
+agentssl_operator_prompts: dict[str, str] = {
     "draft_intro": """TBD""",
     "improve_intro": """TBD""",
     "debug_intro": """TBD""",
@@ -52,7 +52,7 @@ agentSSL_operator_prompts: dict[str, str] = {
 
 
 @dataclass
-class AgentSSLConfig(TaskConfig):
+class AgentSSLTaskConfig(TaskConfig):
     benchmark: str = field(
         default="vtab",
         metadata={
@@ -66,7 +66,7 @@ class AgentSSLConfig(TaskConfig):
         },
     )
     setting: str = field(
-        default="aSSL_backbone_unsupervised",
+        default="aSSL_unsupervised_greedy_gpt_simple-memory",
         metadata={
             "help": "Setting of the task.",
         },
@@ -84,14 +84,14 @@ class AgentSSLConfig(TaskConfig):
         },
     )
     ssl_dir: str = field(
-        default=get_agentSSL_task_dir(),
+        default=get_agentssl_task_dir(),
         metadata={
             "help": "The directory where all SSL tasks are located.",
             "exclude_from_hash": True,
         },
     )
     cache_dir: str = field(
-        default=get_agentSSL_data_dir(),
+        default=get_agentssl_data_dir(),
         metadata={
             "help": "The directory where the task data is cached.",
             "exclude_from_hash": True,

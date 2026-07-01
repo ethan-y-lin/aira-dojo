@@ -1,8 +1,8 @@
 
 # @package task
 
-_target_: dojo.config_dataclasses.task.agentSSL.AgentSSLConfig
-benchmark: agentSSL
+_target_: dojo.config_dataclasses.task.agentssl.AgentSSLTaskConfig
+benchmark: vtab
 name: ???
 setting: ???
 shot: ???

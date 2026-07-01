@@ -22,7 +22,7 @@ from dojo.core.tasks.constants import (
 )
 from dojo.utils.code_parsing import extract_code, format_code, write_code_to_file
 from dojo.utils.output_parsing import extract_metrics
-from dojo.config_dataclasses.task.agentSSL import AgentSSLConfig
+from dojo.config_dataclasses.task.agentssl import AgentSSLTaskConfig
 
 def validate_submission(submission: Path) -> tuple[bool, str]:
     """
@@ -60,7 +60,7 @@ class AgentSSLTask(Task):
       - task_description: The task description.
     """
 
-    def __init__(self, cfg: AgentSSLConfig) -> None:
+    def __init__(self, cfg: AgentSSLTaskConfig) -> None:
         """
         Initialize the AgentSSLTask.
 

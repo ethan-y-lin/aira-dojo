@@ -13,7 +13,7 @@ from aira_core.config.base import BaseConfig
 
 from dojo.utils.config import build
 from dojo.config_dataclasses.task import TASK_MAP
-from dojo.config_dataclasses.task.mlebench import MLEBenchTaskConfig
+from dojo.config_dataclasses.task.agentssl import AgentSSLTaskConfig
 
 
 @dataclass
@@ -56,7 +56,7 @@ class BenchmarkConfig(BaseConfig):
         """
         task_cfgs = []
         for task_name in self.tasks:
-            task_cfg = MLEBenchTaskConfig(
+            task_cfg = AgentSSLTaskConfig(
                 name=task_name,
                 benchmark=self.name,
                 **self.overrides,

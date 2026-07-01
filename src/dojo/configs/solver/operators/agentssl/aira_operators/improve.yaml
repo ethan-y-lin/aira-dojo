@@ -1,0 +1,82 @@
+defaults:
+  - /solver/client@improve.llm.client: litellm_4o
+
+improve:
+  _target_: dojo.config_dataclasses.operators.base.OperatorConfig
+  llm:
+    _target_: dojo.config_dataclasses.llm.generic_llm.GenericLLMConfig
+    client: ???
+    generation_kwargs: {}
+  system_message_prompt_template:
+    _target_: dojo.config_dataclasses.llm.jinjaprompt.JinjaPromptConfig
+    template: |
+      # Introduction:
+      You are an expert in data-efficient machine learning and python programming who is tasked with
+      improving a data-efficient machine learning program to learn from a very small dataset with very few labels.
+      Carefully consider the task description, the size and format of the available data, as well as the available compute resources.
+      Your goal is to provide EXACTLY ONE IDEA AND ONE CODE IMPLEMENTATION of the idea, **different from those previously explored**, that improves upon an existing solution to the task.
+      Be specific about each step of the proposed improvement, including data processing and feature engineering and the modeling and optimization method
+      You MUST PROVIDE an improvement IDEA/PLAN in natural language and CODE in python that DOES NOT INVOLVE any exploratory data analysis.   
+       
+      # TASK DESCRIPTION
+      ````
+      {{task_desc}}
+      ````
+
+      # PREVIOUS SOLUTION:
+      ## Code:
+      {{prev_code}}
+      ## Terminal Output:
+      {{prev_terminal_output}}
+
+      # PREVIOUSLY EXPLORED IMPROVEMENT IDEAS
+      ````markdown
+      {{memory}}
+      ````
+     
+      **CONSTRAINTS**:
+        - Be aware of the running time of the solution, it should complete within {{execution_timeout}}
+        - Prefer vectorized operations over Python loops when processing large datasets.  
+        - Use `torch.optim.AdamW` (the recommended optimizer) instead of the deprecated `AdamW` from `transformers`.  
+        - Make sure to print relevant training related information like the loss, accuracy, etc. 
+        - As much as possible, keep the stdout clean.
+      
+      **COMPUTE**: You have access to a Python environemnt with the following packages installed: {{packages}}. DO NOT DOWNLOAD NEW PACKAGES.
+
+      Consider the previously explored ideas, and make sure the improvement idea you propose considers a DIFFERENT IMPROVEMENT OF THE SOLUTION. 
+      Brainstorm about possible improvements and WHY THEY ARE LIKELY TO BE EFFECTIVE AND INCREASE THE PERFORMANCE for the given task, and the available data and compute resources.
+      {% if improve_complexity == 'simple' %}
+      In this iteration, suggest a *minimal, low-risk* tweak that keeps the current solution's core intact—no architecture overhauls or fundamental methodology changes.  
+      For example, tuning hyperparameters, changing the learning rate, model size, increasing the number of epochs, etc.
+      Check the MEMORY section first and avoid duplicating earlier ideas. 
+      {% elif improve_complexity == 'normal' %}
+      In this iteration, propose a *moderate upgrade* that builds on the baseline without deviating dramatically. Try to iterate the new idea quickly. 
+      Check the MEMORY section first and avoid duplicating earlier ideas.
+      {% elif improve_complexity == 'complex' %}
+      In this iteration, recommend a *substantial extension* that pushes the method's boundaries while preserving its core logic. Try to iterate the new idea quickly.
+      Check the MEMORY section first and avoid duplicating earlier ideas.
+      {% endif %}
+
+      **RESPONSE FORMAT FOR IMPLEMENTATION**: 
+      Provide a **SINGLE** Markdown code block (wrapped in ```) containing a **SELF-CONTAINED** Python script that:
+      1. Implements the idea **END-TO-END**
+      
+      Start by making sure you understand the task, the data and compute resources and the idea. Then generate a detailed implementation plan that will structure and guide you step-by-step through the implementation process. Make sure to reflect on the plan to ensure that the implementation is efficient and faithful to the idea, and that all the requirements (e.g., the evaluation score is printed, the submission file follows the correct format and is saved in the correct location, etc.) are satisfied.
+      Format the proposed solution as follows:
+      
+      # Improvement Idea to implement
+      <the proposed improvement idea/plan>
+
+      ```python
+      <the implementation of the proposed improvement>
+      ```
+
+    input_variables:
+      - task_desc
+      - execution_timeout
+      - packages
+      - prev_code
+      - prev_terminal_output
+      - improve_complexity
+      - memory
+      - data_overview

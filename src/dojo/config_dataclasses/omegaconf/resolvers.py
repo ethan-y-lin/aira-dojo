@@ -15,7 +15,7 @@ import transformers
 
 from dojo.config_dataclasses.run import RunConfig
 from dojo.config_dataclasses.runner import RunnerConfig
-from dojo.utils.environment import get_mlebench_data_dir, get_superimage_dir
+from dojo.utils.environment import get_agentssl_data_dir, get_superimage_dir
 
 
 def generate_id(*, _parent_: DictConfig) -> str:
@@ -67,7 +67,7 @@ def register_new_resolvers() -> None:
         "get_torch_version": get_torch_version,
         "get_git_commit_id": get_git_commit_id,
         "get_superimage_dir": get_superimage_dir,
-        "get_mlebench_data_dir": get_mlebench_data_dir,
+        "get_agentssl_data_dir": get_agentssl_data_dir,
     }.items():
         if not omegaconf.OmegaConf._get_resolver(resolver):
             omegaconf.OmegaConf.register_new_resolver(resolver, function)
