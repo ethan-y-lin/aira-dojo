@@ -24,6 +24,7 @@ from dojo.config_dataclasses.task import TASK_MAP
 from dojo.config_dataclasses.solver import SOLVER_MAP
 from dojo.config_dataclasses.interpreter import INTERPRETER_MAP
 from dojo.utils.config import build
+from dojo.utils.binds import vtab_binds
 from dojo.utils.environment import (
     get_hardware,
     check_pytorch_gpu,
@@ -90,20 +91,24 @@ def _main(cfg: RunConfig):
     log.info("Instantiating the task...")
     task = build(cfg.task, TASK_MAP)
 
+    ro_binds, rw_binds = vtab_binds(cfg.task)
+    cfg.interpreter.read_only_binds = ro_binds
+    cfg.interpreter.read_write_binds = rw_binds
+
     # Allocate resources for the agent's workspace and instantiate an object that lets you reference and use them
     solver_interpreter = build(cfg.interpreter, INTERPRETER_MAP, data_dir=cfg.task.data_dir)
 
     ##### UNCOMMENT TO PAUSE THE CONTAINER
-    solver_interpreter.instance.create_process()
-    try:
-        print("✅ Apptainer environment initialized.")
-        import time
-        while True:
-            time.sleep(60)
-    except KeyboardInterrupt:
-        log.info("Stopping instance...")
-        solver_interpreter.close()
-    return
+    # solver_interpreter.instance.create_process()
+    # try:
+    #     print("✅ Apptainer environment initialized.")
+    #     import time
+    #     while True:
+    #         time.sleep(60)
+    # except KeyboardInterrupt:
+    #     log.info("Stopping instance...")
+    #     solver_interpreter.close()
+    # return
     #####
     eval_interpreter = None
 

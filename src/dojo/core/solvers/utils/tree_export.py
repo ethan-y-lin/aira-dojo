@@ -100,7 +100,7 @@ def cfg_to_tree_struct(cfg, jou: Journal):
         code=[n.code for n in jou],
         term_out=[n.term_out for n in jou],
         analysis=[n.analysis for n in jou],
-        exp_name=cfg.id,
+        exp_name=cfg.exp_name,
         metrics=metrics.tolist(),
         fitnesses=fitnesses,
         prompts=prompts,

@@ -35,7 +35,13 @@ class JupyterInterpreterConfig(InterpreterConfig):
     read_only_binds: dict = field(
         default_factory=dict,
         metadata={
-            "help": "Read-only binds to mount in the container. Example: {'/path/on/host': '/path/in/container'}"
+            "help": "Read-only binds: host path -> container path. Example: {'/path/on/host': '/path/in/container'}"
+        },
+    )
+    read_write_binds: dict = field(
+        default_factory=dict,
+        metadata={
+            "help": "Read-write binds: host path -> container path. Example: {'/path/on/host': '/workspace'}"
         },
     )
     env: dict = field(

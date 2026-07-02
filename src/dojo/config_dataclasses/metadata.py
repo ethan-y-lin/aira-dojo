@@ -28,6 +28,10 @@ class MetadataConfig(BaseConfig):
         metadata={"help": "Description of the experiment."},
     )
     seed: int = field(default=42, metadata={"help": "Random seed for the experiment."})
+    run: int = field(
+        default=1,
+        metadata={"help": "Run number for this task setup. Use to start a fresh output directory."},
+    )
 
     # Tracking information (generated automatically through OmegaConf interpolations)
     launch_time: str = field(

@@ -37,6 +37,7 @@ class JupyterInterpreter(Interpreter):
         self.superimage_version = cfg.superimage_version
         self.read_only_overlays = cfg.read_only_overlays or []
         self.read_only_binds = cfg.read_only_binds or {}
+        self.read_write_binds = cfg.read_write_binds or {}
         self.env = cfg.env or {}
 
         if not self.working_dir.exists():
@@ -57,6 +58,7 @@ class JupyterInterpreter(Interpreter):
             superimage_version=self.superimage_version,
             read_only_overlays=self.read_only_overlays,
             read_only_binds=self.read_only_binds,
+            read_write_binds=self.read_write_binds,
             env=self.env,
         )
         self.code_executor = None
@@ -173,6 +175,7 @@ class JupyterInterpreterFactory(Interpreter):
         self.superimage_version = cfg.superimage_version
         self.read_only_overlays = cfg.read_only_overlays
         self.read_only_binds = cfg.read_only_binds
+        self.read_write_binds = cfg.read_write_binds
         self.env = cfg.env
 
         self._instance = None

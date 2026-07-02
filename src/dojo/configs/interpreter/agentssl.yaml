@@ -2,14 +2,16 @@
 defaults:
   - jupyter
 
-read_only_binds:
-  "${task.eval_dir}": eval
-  "${task.ssl_dir}/${task.benchmark}/eval/_shared": eval/src
-  "${task.task_dir}": task
-  "${task.experiment_dir}/program.py": program.py
+# Binds are set in dojo.utils.binds (agentssl_run.py).
+read_only_binds: {}
+read_write_binds: {}
+
+# Defaults; configure_agentssl_binds() merges these with container paths.
 env:
-  DATA_DIR: /root/data
-  TASK_DIR: /root/task
-  EVAL_DIR: /root/eval
-  PROGRAM_PATH: /root/program.py
-  PYTHONPATH: /root/eval/src
+  DATA_DIR: /data # Where the data is stored
+  TASK_DIR: /task # Where the task information is stored (e.g. task.yaml, task_description.md, annotations)
+  PROGRAM_PATH: /program.py # Where the agent solution will be written to
+  WORKSPACE: /workspace # Where agent can read and write to
+  PYTHONPATH: /eval # Where the evaluation code is stored
+  HF_HUB_OFFLINE: "0" # Whether to offline mode for HF Hub (default is online)
+  TRANSFORMERS_OFFLINE: "0" # Whether to offline mode for Transformers (default is online)

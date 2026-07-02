@@ -40,13 +40,20 @@ class ApptainerJupyterServer(JupyterConnectable):
         superimage_version: str = None,
         read_only_overlays: List[str] = None,
         read_only_binds: Dict[str, str] = None,
+        read_write_binds: Dict[str, str] = None,
         env: Dict[str, str] = None,
     ):
         self.read_only_overlays = read_only_overlays or []
         self.read_only_overlays = [Path(path).resolve() for path in self.read_only_overlays]
 
-        self.read_only_binds = read_only_binds or {}
-        self.read_only_binds = {Path(k).resolve(): Path("/root") / Path(v) for k, v in self.read_only_binds.items()}
+        self.read_only_binds = {
+            Path(str(host)).resolve(): Path(container)
+            for host, container in (read_only_binds or {}).items()
+        }
+        self.read_write_binds = {
+            Path(str(host)).resolve(): Path(container)
+            for host, container in (read_write_binds or {}).items()
+        }
 
         self.env = env or {}
 
@@ -61,6 +68,7 @@ class ApptainerJupyterServer(JupyterConnectable):
         self.superimage_version = superimage_version
 
         args = [
+            "bash",
             str(Path(__file__).parent / "sand"),
             "python",
             "-m",
@@ -76,14 +84,15 @@ class ApptainerJupyterServer(JupyterConnectable):
 
         env = os.environ.copy()
         for k, v in self.env.items():
-            env[f"RAD_{k}"] = v
+            env[f"APPTAINERENV_{k}"] = str(v)
 
         bind_configs = []
         if bind_inputs_dir is not None:
-            bind_configs.append(f"{bind_inputs_dir}:/root/data:ro")
-        for k, v in self.read_only_binds.items():
-            k = os.path.abspath(k)
-            bind_configs.append(f"{k}:{v}:ro")
+            bind_configs.append(f"{bind_inputs_dir}:/data:ro")
+        for host_path, container_path in self.read_only_binds.items():
+            bind_configs.append(f"{host_path}:{container_path}:ro")
+        for host_path, container_path in self.read_write_binds.items():
+            bind_configs.append(f"{host_path}:{container_path}:rw")
         if bind_configs:
             env["APPTAINER_BIND"] = ",".join(bind_configs)
 
@@ -93,11 +102,15 @@ class ApptainerJupyterServer(JupyterConnectable):
             env["SUPERIMAGE_VERSION"] = superimage_version
 
         env["BASE_OVERLAYS"] = " ".join(f"--overlay {overlay}:ro" for overlay in self.read_only_overlays)
-        log.warning(f"Starting `Sand` wrapper server with env:")
-        log.warning(f"  APPTAINER_BIND: {env['APPTAINER_BIND']}")
-        log.warning(f"  SUPERIMAGE_DIR: {env['SUPERIMAGE_DIR']}")
-        log.warning(f"  SUPERIMAGE_VERSION: {env['SUPERIMAGE_VERSION']}")
-        log.warning(f"  BASE_OVERLAYS: {env['BASE_OVERLAYS']}")
+        log.warning("Starting `Sand` wrapper server with env:")
+        log.warning(f"  APPTAINER_BIND: {env.get('APPTAINER_BIND', '')}")
+        log.warning(f"  SUPERIMAGE_DIR: {env.get('SUPERIMAGE_DIR', '')}")
+        log.warning(f"  SUPERIMAGE_VERSION: {env.get('SUPERIMAGE_VERSION', '')}")
+        log.warning(f"  BASE_OVERLAYS: {env.get('BASE_OVERLAYS', '')}")
+        log.warning(
+            "  Interpreter env (forwarded to container via APPTAINERENV_*): "
+            + ", ".join(f"{k}={v}" for k, v in self.env.items())
+        )
         log.warning(f"with args: {args}")
         self._subprocess = subprocess.Popen(
             args,

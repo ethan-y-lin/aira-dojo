@@ -97,8 +97,8 @@ class AgentSSLTaskConfig(TaskConfig):
             "exclude_from_hash": True,
         },
     )
-    data_dir: str = field(
-        default=SI("${task.cache_dir}/${task.benchmark}/${task.name}/data"),
+    data_dir: str = field( # Should add benchmark name to path once we reorganize data folder
+        default=SI("${task.cache_dir}/${task.name}/data"),
         metadata={
             "help": "The directory where the data is stored.",
             "exclude_from_hash": True,

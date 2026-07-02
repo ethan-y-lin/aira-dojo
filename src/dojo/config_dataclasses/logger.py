@@ -17,7 +17,10 @@ from dojo.utils.environment import get_log_dir
 class LoggerConfig(BaseConfig):
     output_dir: str = field(
         default=os.path.join(
-            get_log_dir(), SI("aira-dojo/user_${metadata.user}_issue_${metadata.git_issue_id}/${id}")
+            get_log_dir(),
+            SI(
+                "aira-dojo/${task.benchmark}/${task.name}/${task.setting}/${task.shot}/${task.seed}/run_${metadata.run}/${id}"
+            ),
         ),
         metadata={
             "help": "The output directory where experiment artifacts (e.g. logs, checkpoints) will be written.",

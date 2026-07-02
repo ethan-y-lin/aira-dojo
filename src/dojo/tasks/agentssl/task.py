@@ -77,12 +77,13 @@ class AgentSSLTask(Task):
         self.shot = self.cfg.shot
         self.task_dir = Path(self.cfg.task_dir).resolve()
         self.ssl_dir = Path(self.cfg.ssl_dir).resolve()
+        self.eval_dir = Path(self.cfg.eval_dir).resolve()
         self.warm_start_program = Path(self.task_dir).resolve() / "warm_start_program.py"
         
         # Read task description.
         task_description_path = Path(self.task_dir).resolve() / "description.md"
         self.task_description = self.instructions + "\n" + task_description_path.read_text()
-        eval_script_path = Path(self.task_dir).resolve() / "evaluate.py"
+        eval_script_path = Path(self.eval_dir).resolve() / "evaluate.py"
         self.eval_script = eval_script_path.read_text()
 
         # Experiment directory

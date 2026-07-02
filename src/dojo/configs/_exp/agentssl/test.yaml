@@ -1,6 +1,6 @@
 # @package _global_
 defaults:
-  - override /interpreter: jupyter
+  - override /interpreter: agentssl
   - override /solver: agentssl/greedy
   - override /task: agentssl/_default
   - override /solver/client@solver.operators.analyze.llm.client: litellm_gpt5-4
