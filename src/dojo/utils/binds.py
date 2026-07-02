@@ -16,7 +16,7 @@ def vtab_binds(task: AgentSSLTaskConfig) -> tuple[dict[str, str], dict[str, str]
     ro_binds = {
         str(Path(task.task_dir).resolve()): "/task",
         str(Path(task.eval_dir).resolve()): "/eval",
-        str(Path(task.ssl_dir).resolve() / task.benchmark / "eval" / "shared" / "assets"): "/eval/assets",
+        str(Path(task.ssl_dir).resolve() / task.benchmark / "eval" / "shared" / "assets"): "/assets",
         str(Path(task.ssl_dir).resolve() / task.benchmark / "eval" / "shared" / "core"): "/eval/src",
         str(program_path): "/program.py",
     }

@@ -1,6 +1,7 @@
 logs/
 workspaces/
 shared
+outputs/
 **/*hydra_logs*
 **/cache
 wandb/

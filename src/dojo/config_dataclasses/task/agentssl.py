@@ -62,7 +62,7 @@ class AgentSSLTaskConfig(TaskConfig):
     name: str = field(
         default="dtd",
         metadata={
-            "help": "Domain of the task.",
+            "help": "Dataset of the task.",
         },
     )
     setting: str = field(
