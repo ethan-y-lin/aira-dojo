@@ -16,8 +16,14 @@ class MemoryOpConfig(BaseConfig):
     memory_processor: str = field(
         default="simple_memory",
         metadata={
-            "help": "The memory processor to use. Options: simple_memory, no_memory.",
-            "choices": ["simple_memory", "no_memory"],
+            "help": "The memory processor to use.",
+            "choices": [
+                "simple_memory",
+                "plan_section_memory",
+                "no_memory",
+                "sibling_memory",
+                "ancestral_memory",
+            ],
         },
     )
     memory_op_kwargs: dict = field(

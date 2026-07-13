@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import json
-import math
 import shutil
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import torch
 
+from dojo.config_dataclasses.task.active_program_selection import (
+    ActiveProgramSelectionTaskConfig,
+)
 from dojo.core.interpreters.base import ExecutionResult, Interpreter
 from dojo.core.solvers.utils.metric import MetricValue, WorstMetricValue
 from dojo.core.tasks.constants import (
@@ -22,8 +24,8 @@ from dojo.core.tasks.constants import (
     VALIDATION_FITNESS,
     WARM_START_PROGRAM,
 )
-from dojo.tasks.active_program_selection.active_policies import active_policy_num_queries
 from dojo.tasks.agentssl.task import AgentSSLTask
+from dojo.tasks.active_program_selection.active_policies import active_policy_num_queries
 from dojo.utils.code_parsing import extract_code, format_code, write_code_to_file
 from dojo.utils.output_parsing import extract_metrics
 
@@ -40,11 +42,6 @@ def _ensure_agentssl_importable() -> None:
 _ensure_agentssl_importable()
 
 from agentssl.selection.coda import CODA  # noqa: E402
-
-if TYPE_CHECKING:
-    from dojo.config_dataclasses.task.active_program_selection import (
-        ActiveProgramSelectionTaskConfig,
-    )
 
 
 @dataclass
@@ -63,41 +60,10 @@ class _InMemoryCODADataset:
         self.labels = None
 
 
-def normalized_entropy(pbest: torch.Tensor) -> float:
-    pbest = pbest.detach().float().reshape(-1)
-    if pbest.numel() <= 1:
-        return 0.0
-    probs = pbest / pbest.sum().clamp_min(1e-12)
-    entropy = -(probs.clamp_min(1e-12) * probs.clamp_min(1e-12).log()).sum()
-    return float(entropy / torch.log(torch.tensor(float(probs.numel()))))
-
-
-def average_pairwise_jsd(probs: torch.Tensor) -> tuple[float, float]:
-    probs = probs.detach().float()
-    if probs.ndim != 3 or probs.shape[0] <= 1:
-        return 0.0, 0.0
-
-    probs = probs.clamp_min(1e-12)
-    total = probs.new_tensor(0.0)
-    count = 0
-    for i in range(probs.shape[0]):
-        for j in range(i + 1, probs.shape[0]):
-            p_i = probs[i]
-            p_j = probs[j]
-            midpoint = 0.5 * (p_i + p_j)
-            kl_i = (p_i * (p_i.log() - midpoint.log())).sum(dim=-1)
-            kl_j = (p_j * (p_j.log() - midpoint.log())).sum(dim=-1)
-            total = total + 0.5 * (kl_i + kl_j).mean()
-            count += 1
-    jsd_nats = float(total / max(count, 1))
-    jsd_norm = jsd_nats / math.log(2.0)
-    return jsd_nats, jsd_norm
-
-
 class ActiveProgramSelectionTask(AgentSSLTask):
-    def __init__(self, cfg: "ActiveProgramSelectionTaskConfig") -> None:
+    def __init__(self, cfg: ActiveProgramSelectionTaskConfig) -> None:
         super().__init__(cfg)
-        self.cfg = cfg
+        self.cfg: ActiveProgramSelectionTaskConfig = cfg
         self.warm_start_program = Path(self.task_dir).resolve() / "warm_start_program.py"
         self.workspace_dir = self.experiment_dir / "workspace"
         self.selection_dir = self.experiment_dir / "active_program_selection"
@@ -107,7 +73,6 @@ class ActiveProgramSelectionTask(AgentSSLTask):
         self.queried_labels_path = self.selection_dir / "queried_labels.json"
         self.coda_state_path = self.selection_dir / "coda_state.json"
         self.coda_pbest_history_path = self.selection_dir / "coda_pbest_history.pt"
-        self.controller_history_path = self.selection_dir / "controller_history.jsonl"
         self.oracle_query_ann_file = Path(self.cfg.oracle_query_ann_file).resolve()
         self.query_ann_file = Path(self.cfg.query_ann_file).resolve()
 
@@ -128,12 +93,16 @@ class ActiveProgramSelectionTask(AgentSSLTask):
             "label_budget": self.cfg.label_budget,
             "selection_method": self.cfg.selection_method,
         }
-        warm_start_program = self.warm_start_program.read_text() if self.warm_start_program.exists() else ""
+        if not self.warm_start_program.exists():
+            warm_start_program = ""
+        else:
+            warm_start_program = self.warm_start_program.read_text()
         task_info = {
             TASK_DESCRIPTION: self.task_description,
             "lower_is_better": False,
             WARM_START_PROGRAM: warm_start_program,
         }
+
         return state, task_info
 
     def step_task(self, state: Dict[str, Any], action: Any) -> Tuple[Dict[str, Any], Dict[str, Any]]:
@@ -149,9 +118,10 @@ class ActiveProgramSelectionTask(AgentSSLTask):
         stale_outputs = self.workspace_dir / "query_outputs"
         if stale_outputs.exists():
             shutil.rmtree(stale_outputs)
+        executable = format_code(self.eval_script)
 
         interpreter = state["solver_interpreter"]
-        exec_output: ExecutionResult = interpreter.run(format_code(self.eval_script))
+        exec_output: ExecutionResult = interpreter.run(executable)
         eval_result = {EXECUTION_OUTPUT: exec_output}
 
         if (not exec_output.exit_code == 0) or exec_output.timed_out:
@@ -188,6 +158,7 @@ class ActiveProgramSelectionTask(AgentSSLTask):
             "active_selection": coda_state,
             "score": fitness,
         }
+
         eval_result[VALID_SOLUTION] = True
         eval_result[VALID_SOLUTION_FEEDBACK] = "Program evaluated and query predictions saved"
         eval_result[VALIDATION_FITNESS] = fitness
@@ -228,7 +199,10 @@ class ActiveProgramSelectionTask(AgentSSLTask):
             "query_score": query_score,
         }
         self.queried_labels[item_idx] = record
-        self._save_json(self.queried_labels_path, {str(k): v for k, v in sorted(self.queried_labels.items())})
+        self._save_json(
+            self.queried_labels_path,
+            {str(k): v for k, v in sorted(self.queried_labels.items())},
+        )
         coda_state = self.rerun_coda(history_event="label_added")
         return {
             **record,
@@ -261,8 +235,9 @@ class ActiveProgramSelectionTask(AgentSSLTask):
         if self.cfg.selection_method != "coda":
             raise NotImplementedError(f"Unsupported active selection method: {self.cfg.selection_method}")
 
+        dataset = _InMemoryCODADataset(probs)
         selector = CODA(
-            _InMemoryCODADataset(probs),
+            dataset,
             alpha=self.cfg.coda_alpha,
             learning_rate=self.cfg.coda_learning_rate,
         )
@@ -277,8 +252,6 @@ class ActiveProgramSelectionTask(AgentSSLTask):
         pbest = [float(x) for x in pbest_tensor.tolist()]
         best_local_idx = int(torch.argmax(pbest_tensor).item())
         best_program_id = int(program_ids[best_local_idx])
-        diversity_nats, diversity_norm = average_pairwise_jsd(probs)
-        uncertainty = normalized_entropy(pbest_tensor)
 
         rows = [
             {
@@ -299,10 +272,6 @@ class ActiveProgramSelectionTask(AgentSSLTask):
             "num_query_items": int(probs.shape[1]),
             "num_classes": int(probs.shape[2]),
             "num_labels": len(self.queried_labels),
-            "uncertainty": uncertainty,
-            "diversity": diversity_norm,
-            "diversity_jsd_norm": diversity_norm,
-            "diversity_jsd_nats": diversity_nats,
             "replayed_label_item_idxs": replayed_labels,
             "best_program_id": best_program_id,
             "programs": rows,
@@ -315,39 +284,6 @@ class ActiveProgramSelectionTask(AgentSSLTask):
             self._append_coda_pbest_history(state, history_event)
         return state
 
-    def controller_state(self, allowed_program_ids: set[int] | None = None) -> dict[str, Any]:
-        coda_state = self.rerun_coda(
-            allowed_program_ids=allowed_program_ids,
-            history_event="controller_state",
-            record_history=True,
-        )
-        return {
-            "uncertainty": float(coda_state.get("uncertainty", 0.0)),
-            "diversity": float(coda_state.get("diversity", 0.0)),
-            "pbest": list(self._last_pbest),
-            "program_ids": list(self._last_program_ids),
-            "num_programs": int(coda_state.get("num_programs", 0)),
-            "num_labels": int(coda_state.get("num_labels", len(self.queried_labels))),
-            "coda_state": coda_state,
-        }
-
-    def record_controller_event(self, event: dict[str, Any]) -> None:
-        self.controller_history_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.controller_history_path, "a") as f:
-            f.write(json.dumps(event) + "\n")
-
-    def node_id_for_program_id(self, program_id: int) -> str | None:
-        for record in self.program_records:
-            if int(record.program_id) == int(program_id):
-                return record.node_id
-        return None
-
-    def valid_program_count(self) -> int:
-        return sum(1 for record in self.program_records if record.valid)
-
-    def label_budget_remaining(self) -> int:
-        return int(self.cfg.label_budget) - len(self.queried_labels)
-
     def refresh_node_fitness(self, journal) -> None:
         self._bind_latest_program_to_journal(journal)
         allowed_ids = {
@@ -359,7 +295,10 @@ class ActiveProgramSelectionTask(AgentSSLTask):
             and "active_program_id" in node.metric.info
         }
         coda_state = self.rerun_coda(allowed_program_ids=allowed_ids, record_history=False)
-        pbest_by_program_id = {int(row["program_id"]): float(row["pbest"]) for row in coda_state.get("programs", [])}
+        pbest_by_program_id = {
+            int(row["program_id"]): float(row["pbest"])
+            for row in coda_state.get("programs", [])
+        }
         for node in journal.nodes:
             if (
                 node.is_buggy
@@ -414,12 +353,14 @@ class ActiveProgramSelectionTask(AgentSSLTask):
         artifact_dir = self.programs_dir / f"program_{program_id:04d}"
         artifact_dir.mkdir(parents=True, exist_ok=True)
         write_code_to_file(solution, artifact_dir / "program.py")
+
         for src in output_dir.iterdir():
             if src.is_file():
                 shutil.copy2(src, artifact_dir / src.name)
 
         program_probs_path = artifact_dir / "query_probs.pt"
         self._append_probs(program_probs_path)
+
         record = ProgramRecord(
             program_id=program_id,
             node_id=None,
@@ -448,6 +389,7 @@ class ActiveProgramSelectionTask(AgentSSLTask):
             stacked = torch.cat([old, new_probs.unsqueeze(0)], dim=0)
         else:
             stacked = new_probs.unsqueeze(0)
+
         torch.save(stacked, self.stacked_probs_path)
 
     def _load_stacked_probs(self, allowed_program_ids: set[int] | None = None):
@@ -467,6 +409,7 @@ class ActiveProgramSelectionTask(AgentSSLTask):
 
         if not keep_indices:
             return None, []
+
         return stacked[keep_indices], keep_program_ids
 
     def _fitness_for_program(self, program_id: int, coda_state: dict[str, Any]) -> float:
@@ -508,8 +451,6 @@ class ActiveProgramSelectionTask(AgentSSLTask):
                 "selected_program_id": torch.cat([history["selected_program_id"], row_selected], dim=0),
                 "num_labels": torch.cat([history["num_labels"], row_num_labels], dim=0),
                 "event": [*history.get("event", []), event],
-                "uncertainty": [*history.get("uncertainty", []), float(state.get("uncertainty", 0.0))],
-                "diversity": [*history.get("diversity", []), float(state.get("diversity", 0.0))],
             }
         else:
             history = {
@@ -519,16 +460,19 @@ class ActiveProgramSelectionTask(AgentSSLTask):
                 "selected_program_id": row_selected,
                 "num_labels": row_num_labels,
                 "event": [event],
-                "uncertainty": [float(state.get("uncertainty", 0.0))],
-                "diversity": [float(state.get("diversity", 0.0))],
             }
+
         torch.save(history, self.coda_pbest_history_path)
 
     @staticmethod
     def _pad_columns(tensor: torch.Tensor, width: int, value: float | int) -> torch.Tensor:
         if tensor.shape[1] >= width:
             return tensor
-        pad = torch.full((tensor.shape[0], width - tensor.shape[1]), value, dtype=tensor.dtype)
+        pad = torch.full(
+            (tensor.shape[0], width - tensor.shape[1]),
+            value,
+            dtype=tensor.dtype,
+        )
         return torch.cat([tensor, pad], dim=1)
 
     def _bind_latest_program_to_journal(self, journal) -> None:
@@ -553,10 +497,19 @@ class ActiveProgramSelectionTask(AgentSSLTask):
         with open(self.task_dir / "annotations" / "train" / "train.json") as f:
             train = json.load(f)
 
-        category_to_class = {int(category["id"]): idx for idx, category in enumerate(train["categories"])}
-        image_id_to_name = {int(image["id"]): Path(image["file_name"]).name for image in coco["images"]}
+        category_to_class = {
+            int(category["id"]): idx
+            for idx, category in enumerate(train["categories"])
+        }
+        image_id_to_name = {
+            int(image["id"]): Path(image["file_name"]).name
+            for image in coco["images"]
+        }
         items = []
-        for ann in sorted(coco["annotations"], key=lambda a: image_id_to_name[int(a["image_id"])]):
+        for ann in sorted(
+            coco["annotations"],
+            key=lambda a: image_id_to_name[int(a["image_id"])],
+        ):
             image_id = int(ann["image_id"])
             category_id = int(ann["category_id"])
             items.append(

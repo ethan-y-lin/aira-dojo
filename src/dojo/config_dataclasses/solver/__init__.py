@@ -7,5 +7,12 @@
 from dojo.solvers.greedy import Greedy
 from dojo.solvers.mcts import MCTS
 from dojo.solvers.evo import Evolutionary
+from dojo.solvers.coda_active_search import CODAActiveSearch
+from dojo.config_dataclasses.solver.coda_active_search import CODAActiveSearchSolverConfig
 
-SOLVER_MAP = {"GreedySolverConfig": Greedy, "MCTSSolverConfig": MCTS, "EvolutionarySolverConfig": Evolutionary}
+SOLVER_MAP = {
+    "GreedySolverConfig": Greedy,
+    "MCTSSolverConfig": MCTS,
+    "EvolutionarySolverConfig": Evolutionary,
+    "CODAActiveSearchSolverConfig": CODAActiveSearch,
+}

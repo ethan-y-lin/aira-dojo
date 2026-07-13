@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
+import re
 import time
 from typing import Any, Callable, Optional
 from xml.etree.ElementInclude import include
@@ -66,6 +67,7 @@ def get_node_summary(
     node: Node,
     include_code: bool = False,
     only_plans: bool = False,
+    plan: Optional[str] = None,
 ) -> str:
     """
     Generate a summary of the node for the agent.
@@ -76,10 +78,12 @@ def get_node_summary(
     if not (node.plan and node.code):
         return ""
 
+    plan = node.plan if plan is None else plan
+
     if "debug" in node.operators_used:
-        summary += f"Debug plan: {node.plan}\n"
+        summary += f"Debug plan: {plan}\n"
     else:
-        summary += f"Design: {node.plan}\n"
+        summary += f"Design: {plan}\n"
 
     if only_plans:
         return summary
@@ -119,6 +123,53 @@ def generate_journal_summary(
         for node in nodes
     ]
     summary = separator.join(summary)
+    if not summary:
+        summary = "(No memory available.)"
+    return summary
+
+
+def extract_plan_section(plan: str, headings: list[str]) -> str:
+    """
+    Extract the first configured markdown heading section from a plan.
+
+    This lets a prompt contain extra rationale before the reusable idea, while
+    memory stores only the section intended for future prompts.
+    """
+    if not plan:
+        return ""
+
+    escaped = "|".join(re.escape(heading.strip()) for heading in headings)
+    match = re.search(rf"(?im)^(#{{1,6}})\s*({escaped})\s*$", plan)
+    if match is None:
+        return plan.strip()
+
+    heading_level = len(match.group(1))
+    start = match.start()
+    end = len(plan)
+    for next_heading in re.finditer(r"(?m)^(#{1,6})\s+\S", plan[match.end() :]):
+        if len(next_heading.group(1)) <= heading_level:
+            end = match.end() + next_heading.start()
+            break
+    return plan[start:end].strip()
+
+
+def generate_plan_section_summary(
+    journal: Journal,
+    include_buggy_nodes: bool = False,
+    section_headings: Optional[list[str]] = None,
+) -> str:
+    separator = "\n-------------------------------\n"
+    section_headings = section_headings or ["Idea to implement"]
+    nodes = journal.nodes if include_buggy_nodes else journal.good_nodes
+    nodes = [node for node in nodes if node.plan and node.code]
+
+    summaries = []
+    for node in nodes:
+        filtered_plan = extract_plan_section(node.plan, section_headings)
+        if filtered_plan:
+            summaries.append(get_node_summary(node, only_plans=True, plan=filtered_plan))
+
+    summary = separator.join(summaries)
     if not summary:
         summary = "(No memory available.)"
     return summary
@@ -179,6 +230,21 @@ def simple_memory(
     return summary
 
 
+def plan_section_memory(
+    journal: Journal,
+    node: Optional[Node] = None,
+    max_length: Optional[int] = None,
+    **kwargs,
+) -> str:
+    summary = generate_plan_section_summary(journal, **kwargs)
+
+    if max_length and summary:
+        if len(summary) > max_length:
+            summary = f"...(truncated) {summary[-max_length:]}"
+
+    return summary
+
+
 def ancestral_memory(
     journal: Journal,
     node: Optional[Node] = None,
@@ -202,7 +268,7 @@ def get_sibling_summary(
     only_plans: bool = True,
 ):
     separator = "\n-------------------------------\n"
-    previous_siblings = [node for node in parent_node.children]
+    previous_siblings = sorted(parent_node.children, key=lambda child: (child.step is None, child.step or -1))
     if not include_buggy_nodes:
         log.warning("It's not recommended to use sibling memory without buggy nodes.")
 
@@ -235,6 +301,7 @@ def sibling_memory(
 
 MEM_OPS = {
     "simple_memory": simple_memory,
+    "plan_section_memory": plan_section_memory,
     "no_memory": no_memory,
     "sibling_memory": sibling_memory,
     "ancestral_memory": ancestral_memory,

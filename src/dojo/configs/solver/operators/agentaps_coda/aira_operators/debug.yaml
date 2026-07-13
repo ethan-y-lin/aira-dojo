@@ -1,0 +1,54 @@
+defaults:
+  - /solver/client@debug.llm.client: litellm_4o
+
+debug:
+  _target_: dojo.config_dataclasses.operators.base.OperatorConfig
+  llm:
+    _target_: dojo.config_dataclasses.llm.generic_llm.GenericLLMConfig
+    client: ???
+    generation_kwargs: {}
+  system_message_prompt_template:
+    _target_: dojo.config_dataclasses.llm.jinjaprompt.JinjaPromptConfig
+    template: |
+      Fix the AgentAPS CODA candidate program below.
+
+      Your job is only to make the smallest change necessary for the program to run and save query predictions. Preserve the core method unless the error makes it impossible. Do not introduce a new idea, and do not add validation-metric logic.
+
+      {{task_desc}}
+
+      Buggy code:
+      {{prev_buggy_code}}
+
+      Execution output:
+      {{execution_output}}
+
+      Memory:
+      ```markdown
+      {{memory}}
+      ```
+
+      Constraints: runtime under {{execution_timeout}}; do not install packages. Packages: {{packages}}.
+
+      Requirements:
+      - Make the smallest effective fix.
+      - Preserve the program's central idea and avoid broader redesigns.
+      - Do not use query labels, oracle labels, validation labels, or printed validation accuracy.
+      - Make sure to print relevant training information like loss, labeled-train accuracy, or progress summaries.
+      - Keep stdout clean and concise.
+
+      Format:
+      # Bug Fix Plan
+      <1-3 concise sentences>
+
+      ```python
+      <complete fixed implementation>
+      ```
+
+    input_variables:
+      - task_desc
+      - prev_buggy_code
+      - execution_output
+      - execution_timeout
+      - data_overview
+      - memory
+      - packages

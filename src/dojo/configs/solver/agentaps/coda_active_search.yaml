@@ -1,0 +1,27 @@
+defaults:
+  - greedy
+  - /solver/operators/agentaps_coda@operators:
+    - aira_operators/debug
+    - aira_operators/draft
+    - aira_operators/improve
+    - aide_operators/analyze
+  - override memory: sibling_memory
+  - override memory@debug_memory: debug_memory
+  - override memory@draft_memory: agentaps_idea_memory
+
+_target_: dojo.config_dataclasses.solver.coda_active_search.CODAActiveSearchSolverConfig
+
+data_preview: true
+num_drafts: 5
+initial_drafts: 5
+
+uncertainty_threshold: 0.90
+diversity_threshold: 0.35
+tune_temperature: 0.5
+max_debug_attempts: 3
+query_when_program_budget_exhausted: true
+
+max_debug_depth: 5
+debug_prob: 1.0
+step_limit: 200
+max_llm_call_retries: 3

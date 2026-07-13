@@ -1,0 +1,42 @@
+# @package _global_
+defaults:
+  - override /interpreter: agentssl
+  - override /solver: agentaps/coda_active_search
+  - override /task: active_program_selection/_default
+  - override /solver/client@solver.operators.analyze.llm.client: litellm_gpt5-4
+  - override /solver/client@solver.operators.debug.llm.client: litellm_gpt5-4
+  - override /solver/client@solver.operators.draft.llm.client: litellm_gpt5-4
+  - override /solver/client@solver.operators.improve.llm.client: litellm_gpt5-4
+
+metadata:
+  git_issue_id: active-program-selection-coda-controller
+
+task:
+  name: dtd
+  setting: aSSL
+  shot: k6
+  seed: seed26
+  # Max number of candidate programs to generate/evaluate.
+  program_budget: 30
+  # Max number of ground-truth labels to query from the oracle.
+  label_budget: 100
+  selection_method: coda
+  coda_alpha: 0.1
+  coda_learning_rate: 0.01
+  active_policy:
+    name: disabled
+
+solver:
+  # Safety cap on total solver steps; keep this >= the task budgets plus debug slack.
+  step_limit: 200
+  initial_drafts: 5
+  uncertainty_threshold: 0.90
+  diversity_threshold: 0.35
+  tune_temperature: 0.5
+  max_debug_attempts: 3
+  execution_timeout: 3600
+  time_limit_secs: 86400
+
+logger:
+  wandb_entity: elin5-california-institute-of-technology-caltech
+  wandb_project_name: active-program-selection-test

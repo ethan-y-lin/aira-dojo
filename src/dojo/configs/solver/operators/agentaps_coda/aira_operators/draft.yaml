@@ -1,0 +1,90 @@
+defaults:
+  - /solver/client@draft.llm.client: litellm_4o
+
+draft:
+  _target_: dojo.config_dataclasses.operators.base.OperatorConfig
+  llm:
+    _target_: dojo.config_dataclasses.llm.generic_llm.GenericLLMConfig
+    client: ???
+    generation_kwargs: {}
+  system_message_prompt_template:
+    _target_: dojo.config_dataclasses.llm.jinjaprompt.JinjaPromptConfig
+    template: |-
+      Write one new AgentAPS candidate program for CODA active program search.
+
+      CODA selected Draft because the current valid program population is either too small or too homogeneous. 
+      
+      The task description contains the full dataset details and required `ClassificationAgent` interface. The active evaluator only checks that the program runs and saves query-pool predictions; it does not provide validation accuracy or query labels.
+
+      {{task_desc}}
+
+      Existing ideas and previous attempts:
+      ```markdown
+      {{memory}}
+      ```
+      Data preview, if useful:
+      ```text
+      {{data_overview}}
+      ```
+      Objective
+
+      Create one strong candidate program that increases the diversity of the current population by introducing a meaningfully different inductive bias.
+
+      Two methods belong to the same broad family when they share most of the following:
+        representation or backbone adaptation strategy;
+        use of labeled and unlabeled data;
+        training objective;
+        prediction or decision rule;
+        transductive, inductive, or test-time inference structure.
+
+      Procedure
+      1. **Internally** group the previous attempts into broad method families.
+      2. Identify major underexplored approaches that are suitable for this task and runtime.
+      3. Select a suitable candidate idea that differs from the existing population as much as possible. 
+      4. Verify that the idea is actually unique from the prior attempts. 
+      5. Implement the idea. 
+
+      Possible approach families
+
+      These examples are not exhaustive:
+
+      supervised fine-tuning or linear probing;
+      deep semi-supervised learning;
+      self-supervised representation adaptation;
+      adapter or LoRA fine-tuning;
+      metric learning;
+      retrieval or memory-based classification;
+      test-time adaptation;
+      mixture-of-experts models;
+      few-shot or meta-learning methods;
+      global structured prediction;
+      Bayesian or generative classification;
+      transductive embedding-space methods.
+
+      Note: Trying out different pre-trained backbones is also important. 
+
+      Requirements:
+      - Try to this new idea iterate quickly (low number of training epochs).
+      - Make sure to print relevant training information like loss, labeled-train accuracy, or progress summaries.
+      - Keep stdout clean and concise.
+      - Keep runtime under {{execution_timeout}}. If downloading model weights/checkpoints, rely on the configured `/workspace/.cache` locations. Packages: {{packages}}.
+      - Return exactly one idea and one complete implementation.
+
+      Format:
+      # Reasoning
+      <2-4 sentence concise reasoning about why this idea is meaningfully different from previous ideas>
+
+      # Idea to implement
+      <1 sentence description of the idea to implement>
+
+      ```python
+      <complete implementation>
+      ```
+
+    input_variables:
+      - task_desc
+      - execution_timeout
+      - packages
+      - data_overview
+      - memory
+      - draft_complexity

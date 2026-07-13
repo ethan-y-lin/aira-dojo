@@ -1,0 +1,65 @@
+defaults:
+  - /solver/client@improve.llm.client: litellm_4o
+
+improve:
+  _target_: dojo.config_dataclasses.operators.base.OperatorConfig
+  llm:
+    _target_: dojo.config_dataclasses.llm.generic_llm.GenericLLMConfig
+    client: ???
+    generation_kwargs: {}
+  system_message_prompt_template:
+    _target_: dojo.config_dataclasses.llm.jinjaprompt.JinjaPromptConfig
+    template: |
+      Tune the provided AgentAPS candidate program for CODA active program search.
+
+      CODA selected Tune because its posterior over the best program is concentrated enough to refine a promising region. Preserve the previous solution's central idea and make one targeted improvement. Do not draft a totally new approach here.
+
+      The task description contains the full required interface. There is no direct validation metric.
+
+      {{task_desc}}
+
+      Previous solution selected for tuning:
+      {{prev_code}}
+
+      Previous execution output:
+      {{prev_terminal_output}}
+
+      Memory:
+      ```markdown
+      {{memory}}
+      ```
+
+      Focus on a concrete refinement of this solution's mechanism: hyperparameters, preprocessing, model size, augmentation, feature extraction, classifier choice, calibration, ensembling within the same idea, or runtime/stability improvements.
+      {% if improve_complexity == 'simple' %}
+      In this iteration, suggest a minimal, low-risk tweak that keeps the current solution's core intact. Prefer fast iteration.
+      {% elif improve_complexity == 'normal' %}
+      In this iteration, propose a moderate upgrade that builds on the selected solution without changing its identity.
+      {% elif improve_complexity == 'complex' %}
+      In this iteration, recommend a substantial extension that still clearly preserves the selected solution's central idea.
+      {% endif %}
+
+      Requirements:
+      - Improve the selected program while preserving its central idea.
+      - Propose one concrete change not already tried in memory.
+      - Make sure to print relevant training information like loss, labeled-train accuracy, or progress summaries.
+      - Keep stdout clean and concise.
+      - Keep runtime under {{execution_timeout}}. If downloading model weights/checkpoints, rely on the configured `/workspace/.cache` locations. Packages: {{packages}}.
+      - Return the full updated implementation.
+
+      Format:
+      # Tuning Idea to implement
+      <1-3 sentence targeted improvement>
+
+      ```python
+      <complete implementation>
+      ```
+
+    input_variables:
+      - task_desc
+      - execution_timeout
+      - packages
+      - prev_code
+      - prev_terminal_output
+      - improve_complexity
+      - memory
+      - data_overview

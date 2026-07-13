@@ -10,7 +10,7 @@ from dojo.tasks.active_program_selection.active_policies.linear_policy import (
 def active_policy_num_queries(task: Any) -> int:
     policy = task.active_policy()
     name = policy.get("name", "disabled")
-    if name in {None, "disabled"}:
+    if name in {"disabled", "none", None}:
         return 0
     if name in {"linear", "query_every_n_programs"}:
         return linear_policy_num_queries(task, policy)
