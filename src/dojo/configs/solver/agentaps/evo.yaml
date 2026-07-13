@@ -1,0 +1,54 @@
+defaults:
+  - evo
+  - /solver/operators@operators:
+    - agentaps/aira_operators/debug
+    - agentaps/aira_operators/draft
+    - agentaps/aira_operators/improve
+    - agentaps/aide_operators/analyze
+    - agentssl/aira_operators/crossover
+  - override memory: simple_memory
+  - override memory@debug_memory: debug_memory
+
+step_limit: 10000
+
+num_islands: 1
+max_island_size: 500
+crossover_prob: 0.5
+migration_prob: 0.0
+initial_temp: 1.0
+final_temp: 1.0
+num_generations_till_migration: 999
+num_generations_till_crossover: 2
+num_generations: 100
+individuals_per_generation: 5
+
+max_debug_depth: 10
+max_debug_time: 21600
+data_preview: true
+use_test_score: false
+use_complexity: false
+
+operators:
+  draft:
+    llm:
+      generation_kwargs:
+        temperature: 0.6
+        top_p: 0.95
+  improve:
+    llm:
+      generation_kwargs:
+        temperature: 0.6
+        top_p: 0.95
+  debug:
+    llm:
+      generation_kwargs:
+        temperature: 0.6
+        top_p: 0.95
+  analyze:
+    llm:
+      generation_kwargs:
+        temperature: 0.2
+  crossover:
+    llm:
+      generation_kwargs:
+        temperature: 0.5

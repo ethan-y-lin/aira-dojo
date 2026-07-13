@@ -49,6 +49,7 @@ from dojo.core.tasks.constants import (
     VALIDATION_FITNESS,
     AUX_EVAL_INFO,
     VALID_SOLUTION,
+    WARM_START_PROGRAM,
 )
 from dojo.config_dataclasses.solver.evo import EvolutionarySolverConfig
 from dojo.utils.state import EvolutionaryState
@@ -566,6 +567,7 @@ class Evolutionary(Solver):
         self.data_preview: str | None = None
 
         self.task_desc = task_info[TASK_DESCRIPTION]
+        self.warm_start_program = task_info.get(WARM_START_PROGRAM, "")
         self.lower_is_better = task_info.get("lower_is_better", None)
         assert self.lower_is_better is not None  # Ensure lower_is_better is set
 
@@ -634,6 +636,7 @@ class Evolutionary(Solver):
         plan, code, metrics = execute_op_plan_code(
             self.draft_fn,
             self.task_desc,
+            self.warm_start_program,
             self.journal,
             self.state.current_step,
             self.cfg.time_limit_secs - self.state.running_time,
@@ -1003,6 +1006,12 @@ class Evolutionary(Solver):
                 # if the node is not buggy, we add it to the generation
                 if not child_node.is_buggy:
                     self.journal.append(child_node)
+                    if hasattr(task, "after_program_evaluated"):
+                        active_events = task.after_program_evaluated(self.journal)
+                        if active_events:
+                            self.logger.info(f"Task hook queried {len(active_events)} label(s): {active_events}")
+                    elif hasattr(task, "refresh_node_fitness"):
+                        task.refresh_node_fitness(self.journal)
                     self.log_journal()
                     self.state.current_step += 1
                     solution_nodes.append(child_node)
@@ -1013,6 +1022,12 @@ class Evolutionary(Solver):
                     # Add the debug path to the journal
                     for n in debug_path:
                         self.journal.append(n)
+                        if hasattr(task, "after_program_evaluated"):
+                            active_events = task.after_program_evaluated(self.journal)
+                            if active_events:
+                                self.logger.info(f"Task hook queried {len(active_events)} label(s): {active_events}")
+                        elif hasattr(task, "refresh_node_fitness"):
+                            task.refresh_node_fitness(self.journal)
                         self.log_journal()
                         self.state.current_step += 1
                     if fixed_metric is not None:

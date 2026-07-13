@@ -91,32 +91,3 @@ From: nvidia/cuda:12.4.1-base-ubuntu22.04
 
     # -----------------------------------------------------
     # 5. Generate SSH keys and configure sshd
-    # -----------------------------------------------------
-    mkdir -p $HOME/.ssh
-    ssh-keygen -t rsa -N "" -f "$HOME/.ssh/id_rsa" && \
-    cat "$HOME/.ssh/id_rsa.pub" >> "$HOME/.ssh/authorized_keys" && \
-    chmod 600 "$HOME/.ssh/authorized_keys"
-
-    # Update sshd_config
-    echo > /etc/sshd_config
-    echo "UsePrivilegeSeparation no" >> /etc/sshd_config
-    echo "Port 17022" >> /etc/sshd_config
-    echo "PidFile /tmp/sshd.pid" >> /etc/sshd_config
-    echo "AuthorizedKeysFile .ssh/authorized_keys" >> /etc/sshd_config
-    echo "PasswordAuthentication no" >> /etc/sshd_config
-    echo "HostKey $HOME/.ssh/id_rsa" >> /etc/sshd_config
-    echo "PermitRootLogin yes" >> /etc/sshd_config
-
-    mkdir -p /inputs
-    mkdir -p /outputs
-
-    # # Make entrypoint script executable
-    chmod +x /opt/entrypoint.sh
-
-# %runscript
-#     # This is what runs when you do: apptainer run container.sif
-#     exec /bin/bash /opt/entrypoint.sh
-
-# %startscript
-#     # This is what runs when you do: apptainer start container.sif
-#     exec /bin/bash /opt/entrypoint.sh

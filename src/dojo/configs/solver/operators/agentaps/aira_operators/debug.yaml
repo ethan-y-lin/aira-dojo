@@ -1,0 +1,52 @@
+defaults:
+  - /solver/client@debug.llm.client: litellm_4o
+
+debug:
+  _target_: dojo.config_dataclasses.operators.base.OperatorConfig
+  llm:
+    _target_: dojo.config_dataclasses.llm.generic_llm.GenericLLMConfig
+    client: ???
+    generation_kwargs: {}
+  system_message_prompt_template:
+    _target_: dojo.config_dataclasses.llm.jinjaprompt.JinjaPromptConfig
+    template: |
+      Fix the AgentAPS program below.
+
+      Only fix bugs. Preserve the core method unless the error makes it impossible. Do not add validation-metric logic; the active evaluator only needs the program to run and save query predictions.
+
+      {{task_desc}}
+
+      Buggy code:
+      {{prev_buggy_code}}
+
+      Execution output:
+      {{execution_output}}
+
+      Memory:
+      ```markdown
+      {{memory}}
+      ```
+
+      Constraints: runtime under {{execution_timeout}}; do not download packages. Packages: {{packages}}.
+
+      Requirements:
+      - Implement a fast and efficient program to get a quick feedback of your solution to the bug.
+      - Make sure to print relevant training related information like the loss, accuracy, etc. 
+      - As much as possible, keep the stdout clean.
+
+      Format:
+      # Bug Fix Plan
+      <1-3 concise sentences>
+
+      ```python
+      <complete fixed implementation>
+      ```
+
+    input_variables:
+      - task_desc
+      - prev_buggy_code
+      - execution_output
+      - execution_timeout
+      - data_overview
+      - memory
+      - packages

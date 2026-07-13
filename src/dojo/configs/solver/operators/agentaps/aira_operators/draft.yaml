@@ -1,0 +1,56 @@
+defaults:
+  - /solver/client@draft.llm.client: litellm_4o
+
+draft:
+  _target_: dojo.config_dataclasses.operators.base.OperatorConfig
+  llm:
+    _target_: dojo.config_dataclasses.llm.generic_llm.GenericLLMConfig
+    client: ???
+    generation_kwargs: {}
+  system_message_prompt_template:
+    _target_: dojo.config_dataclasses.llm.jinjaprompt.JinjaPromptConfig
+    template: |-
+      Write one new AgentAPS candidate program.
+
+      The task description contains the full dataset details and required `ClassificationAgent` interface. The active evaluator only checks that the program runs and saves query-pool predictions; it does not provide validation accuracy or query labels.
+
+      {{task_desc}}
+
+      Prior attempts:
+      ```markdown
+      {{memory}}
+      ```
+
+      Data preview, if useful:
+      ```text
+      {{data_overview}}
+      ```
+
+      {% if draft_complexity %}
+      Requested complexity: {{draft_complexity}}.
+      {% endif %}
+
+      Requirements:
+      - Propose a distinct idea not already in memory.
+      - For drafts, prefer supervised baselines and avoid using unlabeled data.
+      - Make sure to print relevant training related information like the loss, accuracy, etc. 
+      - As much as possible, keep the stdout clean.
+      - Do not use query labels or printed validation accuracy.
+      - Keep runtime under {{execution_timeout}}. Do not download packages. Packages: {{packages}}.
+      - Return exactly one idea and one complete implementation.
+
+      Format:
+      # Idea to implement
+      <1-3 sentence idea>
+
+      ```python
+      <complete implementation>
+      ```
+
+    input_variables:
+      - task_desc
+      - execution_timeout
+      - packages
+      - data_overview
+      - memory
+      - draft_complexity

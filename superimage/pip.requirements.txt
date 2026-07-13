@@ -117,3 +117,7 @@ wandb
 weave
 xgboost
 xlrd
+
+pytorch_metric_learning 
+peft
+dotwiz

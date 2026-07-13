@@ -31,7 +31,7 @@ sympy==1.13.3
 tqdm==4.67.1
 xlrd==2.0.1
 submitit==1.5.2
-wandb==0.19.9
+wandb>=0.22.0
 websocket-client==1.8.0
 transformers==4.50.1
 ipykernel==6.29.5

@@ -22,6 +22,7 @@ def draft_op(
     cfg: DictConfig,
     memory_op: Optional[Callable[[Journal, Optional[Node]], str]],
     task_description: str,
+    warm_start_program: str,
     journal: Journal,
     step_count: int,
     remaining_time: int,
@@ -43,6 +44,7 @@ def draft_op(
 
     draft_data = {
         "task_desc": task_description,
+        "warm_start_program": warm_start_program or "",
         "time_remaining": humanize.naturaldelta(remaining_time),
         "steps_remaining": steps_remaining,
         "execution_timeout": humanize.naturaldelta(exec_timeout),

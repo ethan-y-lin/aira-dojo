@@ -31,7 +31,7 @@ draft:
         - Use `torch.optim.AdamW` (the recommended optimizer) instead of the deprecated `AdamW` from `transformers`.  
         - As much as possible, keep the stdout clean.
         - Make sure to print relevant training related information like the loss, accuracy, etc. 
-        - As this is the initial draft, prioritize speed in your solution.
+        - As this is the initial draft, PRIORITIZE SPEED AND SIMPLICITY!!
       
       **DATA**: The training and validation data is already prepared and available in the read-only `/data` directory. You should not unzip any files.
       

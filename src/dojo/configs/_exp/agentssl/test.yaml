@@ -12,11 +12,11 @@ metadata:
   git_issue_id: example # Ideally, this should be a number fetched from github issue when running an actual experiment.
 
 solver:
-  step_limit: 5             # Maximum number of steps in the search process
+  step_limit: 2             # Maximum number of steps in the search process
   improvement_steps: 2          # Number of improvement iterations to perform
   execution_timeout: 14400      # Timeout for each code execution (seconds) - default: 3 hours
   time_limit_secs: 86400     # Total time limit for the entire task (seconds) - default: 15 hours
 
 logger:
-  wandb_entity: SciDUC
+  wandb_entity: elin5-california-institute-of-technology-caltech
   wandb_project_name: agentssl-test

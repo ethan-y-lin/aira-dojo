@@ -1,0 +1,39 @@
+# @package _global_
+defaults:
+  - override /interpreter: agentssl
+  - override /solver: agentaps/greedy
+  - override /task: active_program_selection/_default
+  - override /solver/operators/agentaps@solver.operators:
+    - aira_operators/debug
+    - aira_operators/warm_draft
+    - aira_operators/improve
+    - aide_operators/analyze
+  - override /solver/client@solver.operators.analyze.llm.client: litellm_gpt5-4
+  - override /solver/client@solver.operators.debug.llm.client: litellm_gpt5-4
+  - override /solver/client@solver.operators.draft.llm.client: litellm_gpt5-4
+  - override /solver/client@solver.operators.improve.llm.client: litellm_gpt5-4
+
+metadata:
+  git_issue_id: active-program-selection-test
+
+task:
+  name: dtd
+  setting: aSSL
+  shot: k6
+  seed: seed26
+  program_budget: 50
+  label_budget: 100
+  selection_method: coda
+  coda_alpha: 0.5
+  coda_learning_rate: 0.05
+
+solver:
+  step_limit: 50
+  improvement_steps: 5
+  num_drafts: 5
+  execution_timeout: 3600
+  time_limit_secs: 86400
+
+logger:
+  wandb_entity: elin5-california-institute-of-technology-caltech
+  wandb_project_name: active-program-selection-test

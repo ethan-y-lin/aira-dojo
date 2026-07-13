@@ -1,0 +1,59 @@
+defaults:
+  - /solver/client@draft.llm.client: litellm_4o
+
+draft:
+  _target_: dojo.config_dataclasses.operators.base.OperatorConfig
+  llm:
+    _target_: dojo.config_dataclasses.llm.generic_llm.GenericLLMConfig
+    client: ???
+    generation_kwargs: {}
+  system_message_prompt_template:
+    _target_: dojo.config_dataclasses.llm.jinjaprompt.JinjaPromptConfig
+    template: |-
+      Write one new AgentAPS candidate program.
+
+      The task description contains the full dataset details and required `ClassificationAgent` interface. The active evaluator only checks that the program runs and saves query-pool predictions; it does not provide validation accuracy or query labels.
+
+      You may implement the classifier using any available installed package listed in the prompt, including torchvision, timm, torch, scikit-learn, etc. Explore a diverse range of models and methods! Model/checkpoint downloads are allowed when useful, but they must use the configured workspace cache (`/workspace/.cache`, `HF_HOME`, `TORCH_HOME`, or `TIMM_CACHE_DIR`) and must not write to the home directory, `/tmp`, or the container root. Do not install packages.
+
+      {{task_desc}}
+
+      Prior attempts:
+      ```markdown
+      {{memory}}
+      ```
+
+      Data preview, if useful:
+      ```text
+      {{data_overview}}
+      ```
+
+      {% if draft_complexity %}
+      Requested complexity: {{draft_complexity}}.
+      {% endif %}
+
+      Requirements:
+      - Propose a distinct idea or method or implementation not already in memory.
+      - For drafts, prefer supervised baselines and avoid using unlabeled data.
+      - Consider varied model families and methods.
+      - Make sure to print relevant training related information like the loss, accuracy, etc.
+      - As much as possible, keep the stdout clean.
+      - Do not use query labels or printed validation accuracy.
+      - Keep runtime under {{execution_timeout}}. Do not download packages. If downloading model weights/checkpoints, rely on the configured `/workspace/.cache` locations. Packages: {{packages}}.
+      - Return exactly one idea and one complete implementation.
+
+      Format:
+      # Idea to implement
+      <1-3 sentence idea>
+
+      ```python
+      <complete implementation>
+      ```
+
+    input_variables:
+      - task_desc
+      - execution_timeout
+      - packages
+      - data_overview
+      - memory
+      - draft_complexity

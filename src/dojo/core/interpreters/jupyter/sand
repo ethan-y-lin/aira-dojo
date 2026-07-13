@@ -85,6 +85,7 @@ apptainer instance run \
 
 echo "[DEBUG] Installing pytorch_metric_learning inside container..." >&2
 apptainer exec instance://$INSTANCE_NAME bash -c '
+    pip install pycocotools
     pip install pytorch_metric_learning peft
     pip install dotwiz
 '>&2

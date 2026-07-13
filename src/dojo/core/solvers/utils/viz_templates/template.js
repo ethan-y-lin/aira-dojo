@@ -77,7 +77,9 @@ const setNodeDetails = (nodeIndex) => {
   // Auxiliary Metrics
   const auxElm = document.getElementById("auxiliarymetrics");
   if (auxElm) {
-    auxElm.innerHTML = `<strong>Auxiliary Metrics:</strong> ${metricInfos.fixed(2)}`;
+    auxElm.innerHTML = hljs.highlight(metricInfos || "{}", {
+      language: "json",
+    }).value;
   }
 };
 
@@ -402,11 +404,14 @@ class Node {
   isBuggy = false;
   displayMetric = 0;
   nodeData = null;
+  programStep = null;
+  trueAccuracy = null;
+  codaRank = null;
 
   constructor(x, y, relSize, treeInd) {
     // You can adjust minSize/maxSize to allow visual size differences:
-    const minSize = 18;
-    const maxSize = 18;
+    const minSize = 28;
+    const maxSize = 28;
 
     this.relSize = relSize;
     this.treeInd = treeInd;
@@ -425,7 +430,26 @@ class Node {
     this.nodeData = treeStructData.node_data_list[treeInd];
     this.isBuggy = treeStructData.node_data_list[treeInd].is_buggy;
     try {
-      this.displayMetric = treeStructData.node_data_list[treeInd].metric_info.score.toFixed(2);
+      const metricInfo = this.nodeData.metric_info || {};
+      if (metricInfo.program_step !== undefined && metricInfo.program_step !== null) {
+        this.programStep = metricInfo.program_step;
+      }
+      if (metricInfo.true_accuracy !== undefined && metricInfo.true_accuracy !== null) {
+        this.trueAccuracy = Number(metricInfo.true_accuracy);
+      }
+      if (metricInfo.coda_rank !== undefined && metricInfo.coda_rank !== null) {
+        this.codaRank = metricInfo.coda_rank;
+      }
+    } catch (e) {
+      // no-op
+    }
+    try {
+      if (this.programStep !== null && this.trueAccuracy !== null && !Number.isNaN(this.trueAccuracy)) {
+        const rankLabel = this.codaRank !== null ? `r${this.codaRank}` : "r?";
+        this.displayMetric = `p${this.programStep} ${rankLabel}\n${this.trueAccuracy.toFixed(3)}`;
+      } else {
+        this.displayMetric = treeStructData.node_data_list[treeInd].metric_info.score.toFixed(2);
+      }
     } catch (e) {
       this.displayMetric = '? ?';
     }
@@ -511,7 +535,7 @@ class Node {
     fill(255);
     textAlign(CENTER, CENTER);
     textFont('Helvetica Neue');
-    textSize(this.renderSize * 0.4);
+    textSize(this.renderSize * 0.42);
 
     if (this.isBuggy) {
       text("! !", 0, 0);
@@ -884,4 +908,3 @@ function mouseReleased() {
   draggingNode = null;
   isPanning = false;
 }
-

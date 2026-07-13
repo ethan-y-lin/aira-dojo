@@ -1,0 +1,54 @@
+defaults:
+  - /solver/client@draft.llm.client: litellm_4o
+
+draft:
+  _target_: dojo.config_dataclasses.operators.base.OperatorConfig
+  llm:
+    _target_: dojo.config_dataclasses.llm.generic_llm.GenericLLMConfig
+    client: ???
+    generation_kwargs: {}
+  system_message_prompt_template:
+    _target_: dojo.config_dataclasses.llm.jinjaprompt.JinjaPromptConfig
+    template: |-
+      Write one AgentAPS candidate program that differs from previous solutions in memory.
+
+      The task description contains the full required interface. Use the warm-start code as the baseline to reproduce, modify, or extend. 
+      The evaluator saves query-pool predictions; it does not expose query labels or meaningful validation accuracy.
+
+      {{task_desc}}
+
+      Warm-start code:
+      ```python
+      {{warm_start_program}}
+      ```
+
+      Previous ideas:
+      ```markdown
+      {{memory}}
+      ```
+
+      Requirements:
+      - Propose a distinct idea not already in memory.
+      - Keep this reliable and FAST!! (keep a low (less than 5) number of epochs for now). It is important to iterate quickly to get more feedback on ideas.
+      - Make sure to print relevant training related information like the loss, accuracy, etc. 
+      - As much as possible, keep the stdout clean.
+      - Do not use query labels or printed validation accuracy.
+      - Keep runtime under {{execution_timeout}}. Do not download packages. Packages: {{packages}}.
+      - Return exactly one idea and one complete implementation.
+
+      Format:
+      # Idea to implement
+      <1-3 sentence idea>
+
+      ```python
+      <complete implementation>
+      ```
+
+    input_variables:
+      - task_desc
+      - warm_start_program
+      - execution_timeout
+      - packages
+      - data_overview
+      - memory
+      - draft_complexity

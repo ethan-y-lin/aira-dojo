@@ -1,0 +1,67 @@
+defaults:
+  - /solver/client@improve.llm.client: litellm_4o
+
+improve:
+  _target_: dojo.config_dataclasses.operators.base.OperatorConfig
+  llm:
+    _target_: dojo.config_dataclasses.llm.generic_llm.GenericLLMConfig
+    client: ???
+    generation_kwargs: {}
+  system_message_prompt_template:
+    _target_: dojo.config_dataclasses.llm.jinjaprompt.JinjaPromptConfig
+    template: |
+      Propose an improvement to the provided AgentAPS candidate program. 
+      The task description contains the full required interface. There is no direct validation metric.
+
+      {{task_desc}}
+
+      Previous solution:
+      {{prev_code}}
+
+      Previous execution output:
+      {{prev_terminal_output}}
+
+      Memory:
+      ```markdown
+      {{memory}}
+      ```
+
+      Consider the previously explored ideas, and make sure the improvement idea you propose considers a DIFFERENT IMPROVEMENT OF THE SOLUTION. 
+      Brainstorm about possible improvements and WHY THEY ARE LIKELY TO BE EFFECTIVE AND INCREASE THE PERFORMANCE for the given task, and the available data and compute resources.
+      {% if improve_complexity == 'simple' %}
+      In this iteration, suggest a *minimal, low-risk* tweak that keeps the current solution's core intact—no architecture overhauls or fundamental methodology changes.  
+      For example, tuning hyperparameters, changing the learning rate, model size. Try to iterate quickly (low number of training epochs).
+      Check the MEMORY section first and avoid duplicating earlier ideas. 
+      {% elif improve_complexity == 'normal' %}
+      In this iteration, propose a *moderate upgrade* that builds on the baseline without deviating dramatically. Try to iterate the new idea quickly (low number of training epochs). 
+      Check the MEMORY section first and avoid duplicating earlier ideas.
+      {% elif improve_complexity == 'complex' %}
+      In this iteration, recommend a *substantial extension* that pushes the method's boundaries while preserving its core logic. Try to iterate the new idea quickly.
+      Check the MEMORY section first and avoid duplicating earlier ideas.
+      {% endif %}
+
+      Requirements:
+      - Propose one concrete change not already in memory.
+      - Do not use query labels or printed validation accuracy.
+      - Make sure to print relevant training related information like the loss, accuracy, etc. 
+      - As much as possible, keep the stdout clean.
+      - Keep runtime under {{execution_timeout}}. Do not download packages. Packages: {{packages}}.
+      - Return the full updated implementation.
+
+      Format:
+      # Improvement Idea to implement
+      <1-3 sentence improvement>
+
+      ```python
+      <complete implementation>
+      ```
+
+    input_variables:
+      - task_desc
+      - execution_timeout
+      - packages
+      - prev_code
+      - prev_terminal_output
+      - improve_complexity
+      - memory
+      - data_overview

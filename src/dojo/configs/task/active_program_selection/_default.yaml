@@ -1,0 +1,22 @@
+
+# @package task
+
+_target_: dojo.config_dataclasses.task.active_program_selection.ActiveProgramSelectionTaskConfig
+benchmark: vtab
+name: ???
+setting: aSSL
+shot: ???
+seed: ???
+
+# ~~~ Evaluation and results ~~~
+submission_fname: submission.json
+
+# ~~~ Active label-query policy ~~~
+coda_alpha: 0.9
+coda_learning_rate: 0.01
+active_policy:
+  name: disabled
+  query_every_n_programs: 0
+  start_after_programs: 0
+  queries_per_interval: 1
+  max_queries_per_step: 1

@@ -36,6 +36,7 @@ from dojo.core.tasks.constants import (
     VALIDATION_FITNESS,
     AUX_EVAL_INFO,
     VALID_SOLUTION,
+    WARM_START_PROGRAM,
 )
 from dojo.config_dataclasses.solver.mcts import MCTSSolverConfig
 from dojo.utils.state import MCTSState
@@ -119,6 +120,7 @@ class MCTS(Solver):
         self.data_preview: str | None = None
 
         self.task_desc = task_info[TASK_DESCRIPTION]
+        self.warm_start_program = task_info.get(WARM_START_PROGRAM, "")
         self.lower_is_better = task_info.get("lower_is_better", None)
 
         assert self.lower_is_better is not None
@@ -293,6 +295,7 @@ class MCTS(Solver):
         plan, code, metrics = execute_op_plan_code(
             self.draft_fn,
             self.task_desc,
+            self.warm_start_program,
             self.journal,
             self.state.current_step,
             self.cfg.time_limit_secs - self.state.running_time,
@@ -497,6 +500,12 @@ class MCTS(Solver):
 
             # Add the child to the journal
             self.journal.append(child_node)
+            if hasattr(task, "after_program_evaluated"):
+                active_events = task.after_program_evaluated(self.journal)
+                if active_events:
+                    self.logger.info(f"Task hook queried {len(active_events)} label(s): {active_events}")
+            elif hasattr(task, "refresh_node_fitness"):
+                task.refresh_node_fitness(self.journal)
             self.log_journal()
             self.state.current_step += 1
 
@@ -532,6 +541,12 @@ class MCTS(Solver):
             state, eval_result = task.step_task(state, extract_code(buggy_node.code))
             self.parse_eval_result(node=buggy_node, eval_result=eval_result)
             self.journal.append(buggy_node)
+            if hasattr(task, "after_program_evaluated"):
+                active_events = task.after_program_evaluated(self.journal)
+                if active_events:
+                    self.logger.info(f"Task hook queried {len(active_events)} label(s): {active_events}")
+            elif hasattr(task, "refresh_node_fitness"):
+                task.refresh_node_fitness(self.journal)
             self.log_journal()
             self.state.current_step += 1
             debug_path.append(buggy_node)

@@ -1,0 +1,34 @@
+defaults:
+  - /solver/client@analyze.llm.client: litellm_4o
+
+analyze:
+  _target_: dojo.config_dataclasses.operators.base.OperatorConfig
+  llm:
+    _target_: dojo.config_dataclasses.llm.generic_llm.GenericLLMConfig
+    client: ???
+    generation_kwargs:
+      temperature: 0.2
+  system_message_prompt_template:
+    _target_: dojo.config_dataclasses.llm.jinjaprompt.JinjaPromptConfig
+    template: |
+      Review this AgentAPS program execution.
+
+      A successful active run does not need a meaningful validation metric. It should execute without crashing and report saved query prediction artifacts.
+
+      {{task_desc}}
+
+      Code:
+      {{code}}
+
+      Execution output:
+      {{execution_output}}
+
+      Return JSON using the provided schema:
+      - `is_bug`: true only for crashes, missing required interface, missing query prediction artifacts, or clearly invalid output.
+      - `summary`: 1-2 concise sentences.
+      - `metric`: use a printed active score if present; otherwise use 0.0 for a successful run.
+
+    input_variables:
+      - task_desc
+      - code
+      - execution_output

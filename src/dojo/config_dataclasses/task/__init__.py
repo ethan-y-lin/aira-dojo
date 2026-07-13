@@ -5,5 +5,9 @@
 # LICENSE file in the root directory of this source tree.
 
 from dojo.tasks.agentssl.task import AgentSSLTask
+from dojo.tasks.active_program_selection.task import ActiveProgramSelectionTask
 
-TASK_MAP = {"AgentSSLTaskConfig": AgentSSLTask}
+TASK_MAP = {
+    "AgentSSLTaskConfig": AgentSSLTask,
+    "ActiveProgramSelectionTaskConfig": ActiveProgramSelectionTask,
+}
