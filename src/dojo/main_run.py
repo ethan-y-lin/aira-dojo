@@ -96,7 +96,7 @@ def _main(cfg: RunConfig):
     cfg.interpreter.read_write_binds = rw_binds
 
     # Allocate resources for the agent's workspace and instantiate an object that lets you reference and use them
-    solver_interpreter = build(cfg.interpreter, INTERPRETER_MAP, data_dir=cfg.task.data_dir)
+    solver_interpreter = build(cfg.interpreter, INTERPRETER_MAP)
 
     ##### UNCOMMENT TO PAUSE THE CONTAINER
     solver_interpreter.instance.create_process()
